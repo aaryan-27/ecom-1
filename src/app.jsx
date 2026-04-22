@@ -234,7 +234,7 @@ function AnnouncementBar() {
           {track.map((t, i) => (
             <span key={i} className="flex items-center gap-10">
               <span>{t}</span>
-              <span className="text-acid">★</span>
+              <span className="text-acid twinkle">★</span>
             </span>
           ))}
         </div>
@@ -246,24 +246,48 @@ function AnnouncementBar() {
 function Header() {
   const { count, setDrawerOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [cartPulse, setCartPulse] = useState(false);
+  const prevCount = useRef(count);
   const loc = useLocation();
+
   useEffect(() => { setMobileOpen(false); }, [loc.pathname]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (count !== prevCount.current) {
+      if (count > prevCount.current) {
+        setCartPulse(true);
+        const t = setTimeout(() => setCartPulse(false), 700);
+        return () => clearTimeout(t);
+      }
+      prevCount.current = count;
+    }
+  }, [count]);
+
+  useEffect(() => { prevCount.current = count; }, [count]);
+
   const navLink = ({ isActive }) =>
-    "text-sm font-semibold tracking-wide uppercase hover:text-hot transition " +
-    (isActive ? "text-hot" : "text-ink");
+    "nav-link text-sm font-semibold tracking-wide uppercase " +
+    (isActive ? "is-active text-ink" : "text-ink");
 
   return (
     <>
-      <AnnouncementBar />
-      <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-ink">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <button className="md:hidden p-2 -ml-2" onClick={() => setMobileOpen(true)} aria-label="Menu">
+      <div className="announce-slide"><AnnouncementBar /></div>
+      <header className={"sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-ink header-drop"}>
+        <div className={"header-shell max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between " + (scrolled ? "scrolled" : "")}>
+          <button className="md:hidden p-2 -ml-2 icon-btn" onClick={() => setMobileOpen(true)} aria-label="Menu">
             <Icon.Menu className="w-6 h-6" />
           </button>
 
-          <Link to="/" className="flex items-center gap-2 select-none">
-            <span className="font-display text-3xl md:text-4xl leading-none text-ink">POP<span className="text-hot">.</span>CULTURE</span>
+          <Link to="/" className="logo-wrap select-none" aria-label="Pop Culture Home">
+            <span className="logo-main font-display text-3xl md:text-4xl leading-none text-ink">POP<span className="dot">.</span>CULTURE</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -276,16 +300,19 @@ function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button aria-label="Search" className="hidden md:block p-1 hover:text-hot"><Icon.Search className="w-5 h-5"/></button>
-            <button aria-label="Account" className="hidden md:block p-1 hover:text-hot"><Icon.User className="w-5 h-5"/></button>
+            <button aria-label="Search" className="hidden md:block p-1 icon-btn"><Icon.Search className="w-5 h-5"/></button>
+            <button aria-label="Account" className="hidden md:block p-1 icon-btn"><Icon.User className="w-5 h-5"/></button>
             <button
               aria-label="Cart"
               onClick={() => setDrawerOpen(true)}
-              className="relative p-1 hover:text-hot"
+              className="relative p-1 icon-btn"
             >
-              <Icon.Cart className="w-6 h-6"/>
+              <Icon.Cart className={"w-6 h-6 " + (cartPulse ? "cart-jiggle" : "")}/>
               {count > 0 && (
-                <span className="absolute -top-1 -right-1 bg-hot text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                <span
+                  key={count}
+                  className="count-pop absolute -top-1 -right-1 bg-hot text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+                >
                   {count}
                 </span>
               )}
